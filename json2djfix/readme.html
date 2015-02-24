@@ -1,0 +1,201 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<style>
+*{margin:0;padding:0;}
+body {
+	font:13.34px helvetica,arial,freesans,clean,sans-serif;
+	color:black;
+	line-height:1.4em;
+	background-color: #F8F8F8;
+	padding: 0.7em;
+}
+p {
+	margin:1em 0;
+	line-height:1.5em;
+}
+table {
+	font-size:inherit;
+	font:100%;
+	margin:1em;
+}
+table th{border-bottom:1px solid #bbb;padding:.2em 1em;}
+table td{border-bottom:1px solid #ddd;padding:.2em 1em;}
+input[type=text],input[type=password],input[type=image],textarea{font:99% helvetica,arial,freesans,sans-serif;}
+select,option{padding:0 .25em;}
+optgroup{margin-top:.5em;}
+pre,code{font:12px Monaco,"Courier New","DejaVu Sans Mono","Bitstream Vera Sans Mono",monospace;}
+pre {
+	margin:1em 0;
+	font-size:12px;
+	background-color:#eee;
+	border:1px solid #ddd;
+	padding:5px;
+	line-height:1.5em;
+	color:#444;
+	overflow:auto;
+	-webkit-box-shadow:rgba(0,0,0,0.07) 0 1px 2px inset;
+	-webkit-border-radius:3px;
+	-moz-border-radius:3px;border-radius:3px;
+}
+pre code {
+	padding:0;
+	font-size:12px;
+	background-color:#eee;
+	border:none;
+}
+code {
+	font-size:12px;
+	background-color:#f8f8ff;
+	color:#444;
+	padding:0 .2em;
+	border:1px solid #dedede;
+}
+img{border:0;max-width:100%;}
+abbr{border-bottom:none;}
+a{color:#4183c4;text-decoration:none;}
+a:hover{text-decoration:underline;}
+a code,a:link code,a:visited code{color:#4183c4;}
+h2,h3{margin:1em 0;}
+h1,h2,h3,h4,h5,h6{border:0;}
+h1{font-size:170%;border-top:4px solid #aaa;padding-top:.5em;margin-top:1.5em;}
+h1:first-child{margin-top:0;padding-top:.25em;border-top:none;}
+h2{font-size:150%;margin-top:1.5em;border-top:4px solid #e0e0e0;padding-top:.5em;}
+h3{margin-top:1em;}
+hr{border:1px solid #ddd;}
+ul{margin:1em 0 1em 2em;}
+ol{margin:1em 0 1em 2em;}
+ul li,ol li{margin-top:.5em;margin-bottom:.5em;}
+ul ul,ul ol,ol ol,ol ul{margin-top:0;margin-bottom:0;}
+blockquote{margin:1em 0;border-left:5px solid #ddd;padding-left:.6em;color:#555;}
+dt{font-weight:bold;margin-left:1em;}
+dd{margin-left:2em;margin-bottom:1em;}
+sup {
+    font-size: 0.83em;
+    vertical-align: super;
+    line-height: 0;
+}
+* {
+	-webkit-print-color-adjust: exact;
+}
+@media screen and (min-width: 914px) {
+    body {
+        width: 854px;
+        margin:0 auto;
+    }
+}
+@media print {
+	table, pre {
+		page-break-inside: avoid;
+	}
+	pre {
+		word-wrap: break-word;
+	}
+}
+</style>
+<title>json2djfix</title>
+
+</head>
+<body>
+<h1>json2djfix</h1>
+
+<p>Construct a data fixture suitable for import by django from a "standard" JSON data file</p>
+
+<p>For example, suppose you are building an app <code>sffilm</code> that helps film buffs visiting San Francisco visit filming locations in the city.
+A simple django model for this might look something like this:</p>
+
+<pre><code>class SFFilm4LL(models.Model):
+    idx = models.IntegerField(primary_key=True)
+    title = models.CharField(max_length=100)
+    location = models.CharField(max_length=100)
+    year = models.IntegerField()
+    writer = models.CharField(max_length=100)
+    director = models.CharField(max_length=100)
+</code></pre>
+
+<p>It so happens there is a nice little data set <a href="https://data.sfgov.org/Culture-and-Recreation/Film-Locations-in-San-Francisco/yitu-d5am">provided via the (Socrata) DataSF API</a>.  This data is in the "standard" format of a list-of-dictionaries, ala:</p>
+
+<pre><code>[ {
+  "title" : "180",
+  "actor_1" : "Siddarth",
+  "locations" : "Epic Roasthouse (399 Embarcadero)",
+  "release_year" : "2011",
+  "production_company" : "SPI Cinemas",
+  "actor_2" : "Nithya Menon",
+  "writer" : "Umarji Anuradha, Jayendra, Aarthi Sriram, &amp; Suba ",
+  "director" : "Jayendra",
+  "actor_3" : "Priya Anand"
+}
+, {
+  "title" : "24 Hours on Craigslist",
+  "actor_1" : "Craig Newmark",
+  "release_year" : "2005",
+  ...
+</code></pre>
+
+<p>Call each separate film's dictionary a "data element" and each key of that dictionary a "field."  Note you want to import <em>some</em> but not all of the input JSON's attributes.</p>
+
+<p>django (>= v1.7) can initialize databases via <a href="https://docs.djangoproject.com/en/1.7/topics/migrations/#data-migrations">"fixture migration"</a>.  JSON is one common format for fixtures,  and it also assumes a list-of-dictionaries format for all new data elements.  However, django's fixtures must have, for each data element:</p>
+
+<ul>
+<li><p>a <code>model: &lt;appName&gt;.&lt;modelName&gt;</code> key:value pair</p></li>
+<li><p>a <code>pk: &lt;primaryKeyValue&gt;</code> key:value pair</p></li>
+<li><p>all other fields of the data element as part of a <code>fields</code> dictionary</p></li>
+</ul>
+
+
+<p>This script does nothing but reformat the input JSON to produce a new JSON fixture file conforming to these conventions.</p>
+
+<p>But it needs a few specifications to do that.  These are provided by a parameter file that looks like this:</p>
+
+<pre><code>sffilm.SFFilm4LL
+title,title
+actor_1
+locations,location
+release_year,year,PK
+production_company
+actor_2
+writer,writer
+director,director
+actor_3
+distributor
+fun_facts
+</code></pre>
+
+<p>The first line of the file specifies the <code>&lt;appName&gt;.&lt;modelName&gt;</code>.  All other lines are comma separated and correspond to features in the input JSON data.  Typical lines have two entries: the field's name in the input JSON, and its name in the output model.  <em>If the line has only one element, it means that field is dropped in the output fixture.</em></p>
+
+<p>If there is a third element and it is the token <code>'PK'</code>, that attribute will be used to produce the data elements' primary key ordering.  If no fields have this flag, the original ordering in the input JSON file is used.</p>
+
+<h2>Running script</h2>
+
+<pre><code>python json2djfix.py sffilm2djf.txt SFfilm_api.json sffilm_fix_year.json 
+json2djfix: done. 1000/1000 data converted
+</code></pre>
+
+<h2>Importing fixture into django</h2>
+
+<p><code>loaddata</code> is the command to import this fixture:</p>
+
+<pre><code>$ python manage.py loaddata sffilm/fixtures/sffilm_fix_year.json  
+Installed 1000 object(s) from 1 fixture(s)
+</code></pre>
+
+<p>Looks like it worked; let's check:</p>
+
+<pre><code>$ python manage.py shell
+In [1]: from sffilm.models import SFFilm4LL
+
+In [2]: allFilms = SFFilm4LL.objects.all()
+
+In [3]: len(allFilms)
+Out[3]: 1000
+
+In [4]: film0 = allFilms[0]
+
+In [5]: film0
+Out[5]: &lt;SFFilm4LL: 0:A Jitney Elopement&gt;
+</code></pre>
+</body>
+</html>
