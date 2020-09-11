@@ -457,13 +457,6 @@ if __name__ == '__main__':
 	# prr20, deptTbl = bldIndexTblCSV(csvFile)
 	prr20Recent, deptTbl = bldIndexTblCSV(csvFile,startDate)
 	
-	smqueryFile = dataDir + 'MorrisPRA.csv'
-	qryList = loadPRRQuery(smqueryFile)
-	qryList.sort(key=(lambda k: prr20Recent[k]['createDate']))	
-
-	rptQryFile = dataDir + 'MorrisPRA-summary.csv'
-	rptQry(qryList,rptQryFile)
-
 	openPRRFile = dataDir + 'openPRR_200831.csv'
 	rptOpenPRR(prr20Recent,openPRRFile)
 
