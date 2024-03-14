@@ -23,12 +23,12 @@ import tensorflow_text
 
 # from tensorflow_models import nlp
 
-import torch
-import torchtext
-from torchtext.data.functional import load_sp_model
-from torchtext.vocab import vocab
-from torchtext.transforms import VocabTransform
-from torchtext.models import RobertaClassificationHead
+# import torch
+# import torchtext
+# from torchtext.data.functional import load_sp_model
+# from torchtext.vocab import vocab
+# from torchtext.transforms import VocabTransform
+# from torchtext.models import RobertaClassificationHead
 
 import keras_nlp
 
@@ -41,9 +41,7 @@ SPtokenizer = None
    
 def main():
     
-    print(f'''\ttorch={torch.__version__}
-                torchtext={torchtext.__version__}
-                tensorflow={tf.__version__}
+    print(f'''\ttensorflow={tf.__version__}
                 tensorflow_text={tensorflow_text.__version__}
                 keras={keras.__version__}
                 keras_nlp={keras_nlp.__version__}
@@ -70,8 +68,8 @@ def main():
     trainTF = LH_dataset_HF['train'].with_format("tf")
              
     trainDS = LH_dataset_HF['train'].to_tf_dataset(
-            columns=["text"],
-            label_cols=["answer"],
+            columns="text",
+            label_cols="answer",
             batch_size=batch_size,
             shuffle=False,
             )
