@@ -5,3 +5,8 @@ A place for miscellaneous hacks, including:
 
 * `c4pa_main`: basic utilities for importing People and Voters from NationBuilder CSV files
 
+* `anlyzClassifTree`: annotate dot trees produced by weka's graphviz plugin
+
+* `anlyzPRR.py`: analyze Oakland Public Record Requests from CSV data provided
+
+* `updateBeetsDB`: migrate beets DB with new imported songs into existing beetsDB
