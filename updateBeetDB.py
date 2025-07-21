@@ -1,5 +1,7 @@
 ''' updateDB: merge DB with newly imported songs into primary DB
-Created on Jul 3, 2025. 
+Created on Jul 3, 2025.
+
+250721: v 0.1, offByOne bugfix
 	
 @author: rik
 '''
@@ -118,15 +120,11 @@ def migrateBeets(db1path,db2path):
 		for colIdx,colName in orderedCol:
 			# info: (colIdx,colName,colType,colNNull,colDefault,colPKey)
 			
-			# NB: drop primary key, use auto-increment
+			# NB: drop primary key as part of transform, using auto-increment			
 			if colName=='id':
 				continue
-			
-			# need to retain album_id colIdx for items
-			if tbl=='items' and colName=='album_id':
-				itemAlbumIdColIdx = colIdx
-			
-			if colName in schema1[tbl]:
+				
+			elif colName in schema1[tbl]:
 				# 250715: albums.r128_album_gain,items.r128_album_gain,items.r128_track_gain
 				# are the only ones with type change (int -> real)
 				# but these are always NULL, so drop type change code
@@ -135,9 +133,14 @@ def migrateBeets(db1path,db2path):
 				# else:
 				# 	transform.append( (schema1[tbl][colName][0],schema2[tbl][colName][2]) )
 				transform.append( (schema1[tbl][colName][0], ) )
-				
+
 			else:
 				transform.append(None)
+
+			# need to retain album_id colIdx for items
+			if tbl=='items' and colName=='album_id':
+				itemAlbumIdColIdx = colIdx
+			
 		
 		# 2do: perhaps easier to include the COLUMN_NAMES param to insert?
 
@@ -163,7 +166,8 @@ def migrateBeets(db1path,db2path):
 					values.append(None)
 				elif len(t) == 1:
 					# ASSUME albums processed first, so prev2newAlbum available
-					if (tbl=='items' and tidx == itemAlbumIdColIdx):
+					# tidx == itemAlbumIdColIdx-1 because transform missing element for pkey
+					if (tbl=='items' and tidx == itemAlbumIdColIdx-1):
 						values.append(prev2newAlbumIdx[row[itemAlbumIdColIdx]])
 					else:
 						values.append(row[t[0]])
@@ -216,12 +220,13 @@ def migrateBeets(db1path,db2path):
 		# commit each table
 		db2.commit()
 			
+
 if __name__ == '__main__':
 	# hancock
-	dataDir = '/path_to_directory_with both databses/'
+	dataDir = '/yourPathHere/'
 	
-	db1path = dataDir+'library_prev.db'
-	db2path = dataDir+'library_new.db'
+	db1path = dataDir+'prevLib.db'
+	db2path = dataDir+'newLib.db'
 	
 	# for dbpath in [db1path,db2path]:
 	#	 ppSchema(dbpath)
@@ -229,5 +234,4 @@ if __name__ == '__main__':
 	# rptFile = dataDir + 'schemaComp.csv'
 	# compareBeetSchemata(db1path,db2path,rptFile)
 
-	db2path = dataDir+'library2_tst.db'
 	migrateBeets(db1path,db2path)
